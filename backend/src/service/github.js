@@ -72,10 +72,10 @@ function shouldSkipFile(path, size) {
   if (typeof size === "number" && size > 200_000) return true;
 
   const ext = fileName.includes(".")
-    ? fileName.slice(fileName.lastIndexOf(".") + 1)
+    ? fileName.slice(fileName.lastIndexOf(".") + 1).toLowerCase()
     : "";
   if (SKIP_EXTENSIONS.has(ext)) return true;
-  if (fileName.toLowerCase().endWith(".min.js")) return true;
+  if (fileName.toLowerCase().endsWith(".min.js")) return true;
 
   return false;
 }
@@ -84,11 +84,11 @@ export function parseRepo(input) {
   const clean = input
     .replace("https://github.com/", "")
     .replace("http://github.com/", "")
-    .replace("/\.git$/", "");
+    .replace(/\.git$/, "");
 
-  const [owner, repo] = clean.split("/");
+  const [owner, repoName] = clean.split("/");
 
-  return { owner, repo, repoKey: `${owner}:${repo}` };
+  return { owner, repoName, repoKey: `${owner}/${repoName}` };
 }
 
 export async function fetchRepoFiles(token, owner, repo) {
@@ -116,7 +116,7 @@ export async function fetchRepoFiles(token, owner, repo) {
 
   for (const item of tree.tree) {
     if (item.type !== "blob") continue;
-    if (shouldSkipFile(item.path)) continue;
+    if (shouldSkipFile(item.path, item.size)) continue;
 
     const { data: blob } = await octokit.rest.git.getBlob({
       owner,
@@ -126,7 +126,7 @@ export async function fetchRepoFiles(token, owner, repo) {
 
     files.push({
       path: item.path,
-      content: Buffer.from(blob, "base64").toString("utf-8"),
+      content: Buffer.from(blob.content, "base64").toString("utf-8"),
     });
 
     if (files.length >= 200) break;

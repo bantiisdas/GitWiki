@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Pinecone } from "@pinecone-database/pinecone";
+//import {PineconeStore} from "@langchain/pinecone" - if you want to embed and store in same function - use PineconeStore.fromDocuments
 
 const embeddings = new OpenAIEmbeddings({ model: "text-embedding-3-small" });
 
@@ -33,7 +34,7 @@ function buildRecordID(repo, metadata, content) {
     .digest("hex");
 }
 
-export async function SaveChunks(repo, documents) {
+export async function saveChunks(repo, documents) {
   const chunks = normalizeDocuments(documents);
 
   if (!chunks.length) {
